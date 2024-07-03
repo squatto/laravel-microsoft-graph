@@ -75,8 +75,6 @@ class MsGraph
         } elseif (request()->has('code')) {
             $accessToken = $provider->getAccessToken('authorization_code', ['code' => request('code')]);
 
-            $response = Http::withToken($accessToken->getToken())->get(self::$baseUrl.'me');
-
             if (auth()->check()) {
                 $this->storeToken(
                     $accessToken->getToken(),
@@ -86,6 +84,10 @@ class MsGraph
                     auth()->user()->email
                 );
             } else {
+                // this will throw an exception if not using Laravel 7+
+                // because the HTTP client is not available in Laravel 6 or below
+                $response = Http::withToken($accessToken->getToken())->get(self::$baseUrl.'me');
+
                 event(new NewMicrosoft365SignInEvent([
                     'info'         => $response->json(),
                     'accessToken'  => $accessToken->getToken(),
